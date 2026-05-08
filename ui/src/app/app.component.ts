@@ -1,7 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService, QueryCommandResponse, QueryRowsResponse, QueryResponse } from './api.service';
+import { EditorState } from '@codemirror/state';
+import { EditorView, keymap, lineNumbers, highlightActiveLine, highlightActiveLineGutter } from '@codemirror/view';
+import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
+import { sql } from '@codemirror/lang-sql';
+import { oneDark } from '@codemirror/theme-one-dark';
 
 @Component({
   selector: 'app-root',
@@ -10,7 +15,7 @@ import { ApiService, QueryCommandResponse, QueryRowsResponse, QueryResponse } fr
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })
-export class AppComponent {
+export class AppComponent implements AfterViewInit, OnDestroy {
   tables: string[] = [];
   selectedTable: string | null = null;
   tablePreviewColumns: string[] = [];
@@ -32,8 +37,42 @@ export class AppComponent {
   queryStatus: string | null = null;
   queryError: string | null = null;
 
+  @ViewChild('sqlEditorHost', { static: true }) private readonly sqlEditorHost?: ElementRef<HTMLDivElement>;
+  private editorView?: EditorView;
+
   constructor(private readonly api: ApiService) {
     this.refreshTables();
+  }
+
+  ngAfterViewInit(): void {
+    const host = this.sqlEditorHost?.nativeElement;
+    if (!host) return;
+
+    const updateSqlTextFromEditor = EditorView.updateListener.of((v) => {
+      if (!v.docChanged) return;
+      this.sqlText = v.state.doc.toString();
+    });
+
+    const state = EditorState.create({
+      doc: this.sqlText,
+      extensions: [
+        oneDark,
+        history(),
+        keymap.of([indentWithTab, ...defaultKeymap, ...historyKeymap]),
+        lineNumbers(),
+        highlightActiveLineGutter(),
+        highlightActiveLine(),
+        sql(),
+        EditorView.lineWrapping,
+        updateSqlTextFromEditor
+      ]
+    });
+
+    this.editorView = new EditorView({ state, parent: host });
+  }
+
+  ngOnDestroy(): void {
+    this.editorView?.destroy();
   }
 
   refreshTables() {
