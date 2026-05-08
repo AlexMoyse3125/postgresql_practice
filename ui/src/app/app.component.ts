@@ -5,8 +5,9 @@ import { ApiService, QueryCommandResponse, QueryRowsResponse, QueryResponse } fr
 import { Compartment, EditorState } from '@codemirror/state';
 import { EditorView, keymap, lineNumbers, highlightActiveLine, highlightActiveLineGutter } from '@codemirror/view';
 import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
+import { defaultHighlightStyle, syntaxHighlighting } from '@codemirror/language';
 import { sql } from '@codemirror/lang-sql';
-import { oneDark } from '@codemirror/theme-one-dark';
+import { oneDark, oneDarkHighlightStyle } from '@codemirror/theme-one-dark';
 
 @Component({
   selector: 'app-root',
@@ -60,7 +61,11 @@ export class AppComponent implements AfterViewInit, OnDestroy {
     const state = EditorState.create({
       doc: this.sqlText,
       extensions: [
-        this.themeCompartment.of(this.isDarkMode ? oneDark : []),
+        this.themeCompartment.of(
+          this.isDarkMode
+            ? [oneDark, syntaxHighlighting(oneDarkHighlightStyle)]
+            : [syntaxHighlighting(defaultHighlightStyle)]
+        ),
         history(),
         keymap.of([indentWithTab, ...defaultKeymap, ...historyKeymap]),
         lineNumbers(),
@@ -83,7 +88,11 @@ export class AppComponent implements AfterViewInit, OnDestroy {
     this.isDarkMode = !this.isDarkMode;
     this.applyThemeToDocument();
     this.editorView?.dispatch({
-      effects: this.themeCompartment.reconfigure(this.isDarkMode ? oneDark : [])
+      effects: this.themeCompartment.reconfigure(
+        this.isDarkMode
+          ? [oneDark, syntaxHighlighting(oneDarkHighlightStyle)]
+          : [syntaxHighlighting(defaultHighlightStyle)]
+      )
     });
   }
 
