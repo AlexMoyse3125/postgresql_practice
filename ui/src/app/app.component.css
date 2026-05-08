@@ -2,6 +2,118 @@
   height: 100vh;
   background: var(--bg);
   color: var(--fg);
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  position: relative;
+}
+
+.modalBackdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 50;
+}
+
+.modal {
+  position: absolute;
+  z-index: 51;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(520px, calc(100% - 24px));
+  background: var(--panelBg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+}
+
+.modalTitle {
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+
+.modalBody {
+  color: var(--muted);
+  font-size: 12px;
+  margin-bottom: 10px;
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.modeSidebar {
+  border-right: 1px solid var(--border);
+  background: var(--panelBg);
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.modeHeader {
+  padding: 12px 12px 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.modeHeaderRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.modeTitle {
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.modeList {
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow: auto;
+}
+
+.modeItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.modeItem:hover {
+  background: var(--btnBg);
+  border-color: var(--border2);
+}
+
+.modeItem.active {
+  background: var(--accentBg);
+  border-color: var(--accentBorder);
+}
+
+.modeName {
+  font-size: 13px;
+}
+
+.modeStatus {
+  width: 18px;
+  text-align: center;
+  color: var(--muted2);
+  font-weight: 800;
+}
+
+.modeStatus.done {
+  color: var(--ok);
 }
 
 .main {
@@ -34,6 +146,24 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+}
+
+.instructions {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--accentBg) 55%, transparent);
+}
+
+.instructionsTitle {
+  font-weight: 700;
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+
+.instructionsText {
+  font-size: 12px;
+  color: var(--muted);
+  white-space: pre-wrap;
 }
 
 .panelTitle {
@@ -81,6 +211,12 @@
 .btn.primary {
   border-color: var(--accentBorder);
   background: var(--accentBg);
+}
+
+.btn.danger {
+  border-color: var(--dangerBorder);
+  background: var(--dangerBg);
+  color: var(--dangerFg);
 }
 
 .sql {
@@ -243,6 +379,7 @@
   --dangerBg: #1c0d0d;
   --dangerBorder: #3a1a1a;
   --dangerFg: #ffd7d7;
+  --ok: #69db7c;
 }
 
 :host-context(html[data-theme='light']) {

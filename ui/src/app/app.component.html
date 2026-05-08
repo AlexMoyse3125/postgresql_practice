@@ -1,4 +1,47 @@
 <div class="app">
+  <div class="modalBackdrop" *ngIf="isResetDialogOpen" (click)="cancelReset()"></div>
+  <div class="modal" *ngIf="isResetDialogOpen" role="dialog" aria-modal="true">
+    <div class="modalTitle">Reset everything?</div>
+    <div class="modalBody">
+      This will clear drafts, progress, and settings back to default.
+    </div>
+    <div class="modalActions">
+      <button class="btn" (click)="cancelReset()">Cancel</button>
+      <button class="btn danger" (click)="confirmReset()">Reset</button>
+    </div>
+  </div>
+
+  <aside class="modeSidebar">
+    <div class="modeHeader">
+      <div class="modeHeaderRow">
+        <div class="modeTitle">SQL Practice</div>
+        <button class="btn danger" (click)="resetAll()">Reset</button>
+      </div>
+    </div>
+
+    <div class="modeList">
+      <button
+        class="modeItem"
+        [class.active]="selectedModeId === 'sandbox'"
+        (click)="selectMode('sandbox')"
+      >
+        <span class="modeName">Sandbox</span>
+      </button>
+
+      <button
+        class="modeItem"
+        *ngFor="let p of problems"
+        [class.active]="selectedModeId === p.id"
+        (click)="selectMode(p.id)"
+      >
+        <span class="modeName">{{ p.title }}</span>
+        <span class="modeStatus" [class.done]="isProblemCompleted(p.id)">
+          {{ isProblemCompleted(p.id) ? '✓' : '' }}
+        </span>
+      </button>
+    </div>
+  </aside>
+
   <main class="main">
     <section class="panel">
       <div class="panelHeader">
@@ -11,6 +54,11 @@
           <button class="btn" (click)="toggleTheme()">{{ isDarkMode ? 'Day' : 'Night' }}</button>
           <button class="btn primary" (click)="runQuery()" [disabled]="isRunningQuery">Run</button>
         </div>
+      </div>
+
+      <div class="instructions" *ngIf="activeProblem">
+        <div class="instructionsTitle">{{ activeProblem.title }}</div>
+        <div class="instructionsText">{{ activeProblem.instructions }}</div>
       </div>
 
       <div class="sqlEditor" #sqlEditorHost></div>
