@@ -28,22 +28,36 @@
         <span class="modeName">Sandbox</span>
       </button>
 
-      <button
-        class="modeItem"
-        *ngFor="let p of problems"
-        [class.active]="selectedModeId === p.id"
-        (click)="selectMode(p.id)"
-      >
-        <span class="modeName">{{ p.title }}</span>
-        <span class="modeStatus" [class.done]="isProblemCompleted(p.id)">
-          {{ isProblemCompleted(p.id) ? '✓' : '' }}
-        </span>
-      </button>
+      <ng-container *ngFor="let c of problemCategories">
+        <div class="modeCategory">{{ c.name }}</div>
+        <button
+          class="modeItem"
+          *ngFor="let p of c.problems"
+          [class.active]="selectedModeId === p.id"
+          (click)="selectMode(p.id)"
+        >
+          <span class="modeName">{{ p.title }}</span>
+          <span class="modeStatus" [class.done]="isProblemCompleted(p.id)">
+            {{ isProblemCompleted(p.id) ? '✓' : '' }}
+          </span>
+        </button>
+      </ng-container>
+    </div>
+
+    <div class="progressCard">
+      <div class="progressTop">
+        <div class="progressLabel">Progress</div>
+        <div class="progressValue">{{ completedCount }}/{{ totalProblems }}</div>
+      </div>
+      <div class="progressBar" role="progressbar" [attr.aria-valuenow]="progressPercent" aria-valuemin="0" aria-valuemax="100">
+        <div class="progressFill" [style.width.%]="progressPercent"></div>
+      </div>
+      <div class="progressHint">{{ progressPercent }}%</div>
     </div>
   </aside>
 
   <main class="main">
-    <section class="panel">
+    <section class="panel sqlPanel">
       <div class="panelHeader">
         <div class="panelTitle">SQL</div>
         <div class="row">
@@ -112,7 +126,7 @@
       </div>
     </div>
 
-    <section class="panel">
+    <section class="panel previewPanel">
       <div class="panelHeader">
         <div class="panelTitle">Preview rows</div>
         <div class="muted" *ngIf="selectedTable">{{ selectedTable }}</div>
