@@ -530,12 +530,12 @@
   --border2: #24324a;
   --muted: #b9c7e6;
   --muted2: #8ea3c7;
-  --accentBg: #15223a;
-  --accentBorder: #2a3e66;
+  --accentBg: #0f2a20;
+  --accentBorder: #1e6b4c;
   --dangerBg: #1c0d0d;
   --dangerBorder: #3a1a1a;
   --dangerFg: #ffd7d7;
-  --ok: #69db7c;
+  --ok: #43d17a;
   --shadowSm: 0 10px 30px rgba(0, 0, 0, 0.22);
 }
 
@@ -548,8 +548,8 @@
   --border2: #c5d0e3;
   --muted: #334a73;
   --muted2: #5a6f93;
-  --accentBg: #e8f0ff;
-  --accentBorder: #7aa2ff;
+  --accentBg: #e7f6ef;
+  --accentBorder: #1e6b4c;
   --dangerBg: #ffecec;
   --dangerBorder: #ffb3b3;
   --dangerFg: #5f1a1a;
