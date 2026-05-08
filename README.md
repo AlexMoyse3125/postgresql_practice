@@ -4,7 +4,7 @@ The goal of this repo is to provide a **zero-friction SQL practice environment**
 
 - A real **PostgreSQL** database (Docker)
 - A tiny **Python (FastAPI)** API that executes SQL and returns results
-- A very basic **Angular** UI to run queries and browse tables
+- An **Angular** UI with a Sandbox + problem-based practice mode
 
 ## Quick start
 
@@ -20,6 +20,16 @@ Then open:
 
 - UI: `http://localhost:4200`
 - API (for debugging): `http://localhost:8000/docs`
+
+## What’s in the UI
+
+- **Sandbox**: free-form SQL with a starter query.
+- **Problems**: categorized SQL questions with visible instructions.
+  - Problems are auto-graded by comparing your query’s result to the expected result.
+  - Progress and drafts persist in the browser (until you reset).
+- **Reset buttons**:
+  - Global Reset in the left sidebar (clears everything back to defaults).
+  - Per-problem Reset near Run (clears only the current mode/problem state).
 
 ## Resetting the database
 

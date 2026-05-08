@@ -10,10 +10,11 @@ Build a tiny, clone-and-run SQL practice environment:
 - **FastAPI** (Python) exposes a minimal HTTP API:
   - Execute user-provided SQL and return results/errors.
   - Provide simple schema browsing endpoints for the UI.
-- **Angular** provides a very basic UI:
-  - SQL editor + Run button.
-  - Table list sidebar; selecting a table shows first N rows.
-  - Results table for SELECT/RETURNING; status text for non-row commands; error display.
+- **Angular** provides a minimal “practice/game” UI:
+  - CodeMirror-based SQL editor with SQL highlighting.
+  - Sandbox + categorized problems (auto-graded).
+  - Query results viewer + table preview viewer.
+  - Theme toggle (day/night), reset flows.
 
 The user explicitly prioritizes **low friction** over elegance. It can be clunky/over-engineered if it reduces setup pain.
 
@@ -24,6 +25,7 @@ The user explicitly prioritizes **low friction** over elegance. It can be clunky
   - A fresh startup produces a fresh seeded dataset.
 - Seed dataset: **multiple small related tables** (join-friendly) to practice SQL.
 - Keep the tool intentionally simple; avoid features that require credentials, logins, or external services.
+- The user may ask for longer, open-ended UI iterations; **do not commit/push unless explicitly requested**.
 
 ## Expected runtime experience
 
@@ -35,7 +37,7 @@ The user explicitly prioritizes **low friction** over elegance. It can be clunky
 - Reset:
   - `docker compose down` then `docker compose up --build` (ephemeral DB reseeds)
 
-## Planned repo structure
+## Repo structure (current)
 
 - `docker-compose.yml`
 - `README.md`
@@ -61,7 +63,7 @@ Guardrails:
 - Allow arbitrary SQL (practice tool), but apply a **soft row limit** to keep UI responsive.
 - Use parameterized queries for table browsing endpoints.
 
-## Dataset guidance
+## Dataset (current)
 
 Prefer a small set of related tables that enable:
 - basic selects
@@ -69,8 +71,54 @@ Prefer a small set of related tables that enable:
 - aggregation and grouping
 - constraints (PK/FK/unique)
 
-Example set:
-- `users`, `products`, `orders`, `order_items`, `categories`, `product_categories`
+Current tables:
+- `users`, `products`, `categories`
+- `orders`, `order_items`
+- `product_categories` (many-to-many)
+
+Seed size (approx; may change as seed expands):
+- `users`: ~10
+- `products`: ~16
+- `orders`: ~15
+- `order_items`: ~29
+
+## UI/game mechanics (current)
+
+### Modes
+- `Sandbox`: starts with a prefilled sample query.
+- `Problems`: categorized list of problems; each problem has instructions and an expected result.
+
+### Problem definitions
+- Problems live in `ui/src/app/app.component.ts` as `problemCategories`.
+- Each problem has:
+  - `id` (e.g. `p1`..`p30`)
+  - `category` and `title`
+  - `instructions` (displayed above editor)
+  - `expectedSql` (used for grading)
+
+### Grading model
+- When on a problem, clicking **Run**:
+  - executes user SQL
+  - executes `expectedSql`
+  - compares **columns + rows** for equality (stringified cell compare for most types)
+- Non-row statements are rejected for problems (expects SELECT-like row output).
+
+### Persistence model
+- Browser persistence via `localStorage` (see `STORAGE_KEY` in `app.component.ts`).
+- Persisted items include:
+  - selected mode
+  - theme (day/night)
+  - query limit
+  - completion status
+  - drafts per mode (autosave)
+  - query output per mode (columns/rows/status/error)
+
+### Reset flows
+- Global reset: left sidebar **Reset** button with an in-app modal confirmation.
+- Per-problem reset: header **Reset problem** button; clears draft/output/completion for current mode.
+
+### UX constraints (important)
+- Page/panels are intended to be **fixed size**; content should scroll within panels, not resize the layout.
 
 ## Development conventions (recommended)
 
