@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { AfterViewInit, Component, ElementRef, OnDestroy, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService, QueryCommandResponse, QueryRowsResponse, QueryResponse } from './api.service';
-import { EditorState } from '@codemirror/state';
+import { Compartment, EditorState } from '@codemirror/state';
 import { EditorView, keymap, lineNumbers, highlightActiveLine, highlightActiveLineGutter } from '@codemirror/view';
 import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
 import { sql } from '@codemirror/lang-sql';
@@ -37,10 +37,14 @@ export class AppComponent implements AfterViewInit, OnDestroy {
   queryStatus: string | null = null;
   queryError: string | null = null;
 
+  isDarkMode = true;
+
   @ViewChild('sqlEditorHost', { static: true }) private readonly sqlEditorHost?: ElementRef<HTMLDivElement>;
   private editorView?: EditorView;
+  private readonly themeCompartment = new Compartment();
 
   constructor(private readonly api: ApiService) {
+    this.applyThemeToDocument();
     this.refreshTables();
   }
 
@@ -56,7 +60,7 @@ export class AppComponent implements AfterViewInit, OnDestroy {
     const state = EditorState.create({
       doc: this.sqlText,
       extensions: [
-        oneDark,
+        this.themeCompartment.of(this.isDarkMode ? oneDark : []),
         history(),
         keymap.of([indentWithTab, ...defaultKeymap, ...historyKeymap]),
         lineNumbers(),
@@ -73,6 +77,19 @@ export class AppComponent implements AfterViewInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.editorView?.destroy();
+  }
+
+  toggleTheme(): void {
+    this.isDarkMode = !this.isDarkMode;
+    this.applyThemeToDocument();
+    this.editorView?.dispatch({
+      effects: this.themeCompartment.reconfigure(this.isDarkMode ? oneDark : [])
+    });
+  }
+
+  private applyThemeToDocument(): void {
+    const theme = this.isDarkMode ? 'dark' : 'light';
+    document.documentElement.dataset['theme'] = theme;
   }
 
   refreshTables() {

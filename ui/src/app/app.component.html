@@ -1,23 +1,4 @@
 <div class="app">
-  <aside class="sidebar">
-    <div class="sidebarHeader">
-      <div class="title">postgresql_practice</div>
-      <button class="btn" (click)="refreshTables()" [disabled]="isLoadingTables">Refresh</button>
-    </div>
-
-    <div class="sidebarBody">
-      <div class="muted" *ngIf="isLoadingTables">Loading tables…</div>
-      <button
-        class="tableItem"
-        *ngFor="let t of tables"
-        (click)="selectTable(t)"
-        [class.active]="t === selectedTable"
-      >
-        {{ t }}
-      </button>
-    </div>
-  </aside>
-
   <main class="main">
     <section class="panel">
       <div class="panelHeader">
@@ -27,6 +8,7 @@
             Limit
             <input class="input" type="number" [(ngModel)]="queryLimit" min="1" max="5000" />
           </label>
+          <button class="btn" (click)="toggleTheme()">{{ isDarkMode ? 'Day' : 'Night' }}</button>
           <button class="btn primary" (click)="runQuery()" [disabled]="isRunningQuery">Run</button>
         </div>
       </div>
@@ -62,9 +44,29 @@
       </ng-template>
     </section>
 
+    <div class="tableStrip">
+      <div class="tableStripLeft">
+        <div class="panelTitle">Table preview</div>
+        <div class="muted" *ngIf="isLoadingTables">Loading tables…</div>
+      </div>
+      <div class="tableStripRight">
+        <button class="btn" (click)="refreshTables()" [disabled]="isLoadingTables">Refresh tables</button>
+        <div class="tablePills" *ngIf="tables.length">
+          <button
+            class="pill"
+            *ngFor="let t of tables"
+            (click)="selectTable(t)"
+            [class.active]="t === selectedTable"
+          >
+            {{ t }}
+          </button>
+        </div>
+      </div>
+    </div>
+
     <section class="panel">
       <div class="panelHeader">
-        <div class="panelTitle">Table preview</div>
+        <div class="panelTitle">Preview rows</div>
         <div class="muted" *ngIf="selectedTable">{{ selectedTable }}</div>
       </div>
 
