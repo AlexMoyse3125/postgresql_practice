@@ -436,6 +436,10 @@
   overflow: auto;
 }
 
+.emptyState {
+  padding: 12px 14px;
+}
+
 .table {
   width: 100%;
   border-collapse: collapse;

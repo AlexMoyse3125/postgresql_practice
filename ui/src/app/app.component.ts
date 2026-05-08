@@ -27,6 +27,23 @@ type PersistedStateV1 = {
   draftsByMode: Record<string, string>;
 };
 
+type QueryOutputState = {
+  columns: string[];
+  rows: unknown[][];
+  status: string | null;
+  error: string | null;
+};
+
+type PersistedStateV2 = {
+  v: 2;
+  selectedModeId: ModeId;
+  isDarkMode: boolean;
+  queryLimit: number;
+  completedProblemIds: ModeId[];
+  draftsByMode: Record<string, string>;
+  outputsByMode: Record<string, QueryOutputState>;
+};
+
 @Component({
   selector: 'app-root',
   standalone: true,
@@ -35,11 +52,14 @@ type PersistedStateV1 = {
   styleUrl: './app.component.css'
 })
 export class AppComponent implements AfterViewInit, OnDestroy {
-  private readonly STORAGE_KEY = 'postgresql_practice_state_v1';
+  private readonly STORAGE_KEY = 'postgresql_practice_state_v2';
   selectedModeId: ModeId = 'sandbox';
   completedProblemIds = new Set<ModeId>();
   private readonly draftsByMode = new Map<ModeId, string>();
+  private readonly outputsByMode = new Map<ModeId, QueryOutputState>();
   isResetDialogOpen = false;
+  isProblemResetDialogOpen = false;
+  private problemResetTarget: ModeId | null = null;
 
   problemCategories: { name: string; problems: Problem[] }[] = [
     {
@@ -372,15 +392,15 @@ export class AppComponent implements AfterViewInit, OnDestroy {
   selectMode(id: ModeId): void {
     // Save current draft before switching.
     this.draftsByMode.set(this.selectedModeId, this.sqlText);
+    this.saveCurrentOutputState();
 
     this.selectedModeId = id;
-    this.queryError = null;
-    this.queryStatus = null;
 
     const nextDraft =
       this.draftsByMode.get(id) ??
       (id === 'sandbox' ? this.sandboxStarterSql : '');
     this.setEditorText(nextDraft);
+    this.loadOutputStateForMode(id);
     this.persistState();
   }
 
@@ -481,6 +501,7 @@ export class AppComponent implements AfterViewInit, OnDestroy {
     this.queryStatus = null;
     this.queryColumns = [];
     this.queryRows = [];
+    this.saveCurrentOutputState();
 
     this.isRunningQuery = true;
     const sqlText = this.sqlText?.trim();
@@ -502,15 +523,20 @@ export class AppComponent implements AfterViewInit, OnDestroy {
           this.queryStatus = `${r.command} affected ${r.rowCount} row(s).`;
         }
 
+        this.saveCurrentOutputState();
+
         const problem = this.activeProblem;
         if (!problem) {
           this.isRunningQuery = false;
+          this.persistState();
           return;
         }
 
         if (res.kind !== 'rows') {
           this.isRunningQuery = false;
           this.queryError = 'This problem requires a SELECT-style query that returns rows.';
+          this.saveCurrentOutputState();
+          this.persistState();
           return;
         }
 
@@ -530,17 +556,22 @@ export class AppComponent implements AfterViewInit, OnDestroy {
               this.persistState();
             } else {
               this.queryStatus = `Not quite. Try again — your result doesn't match the expected output.`;
+              this.persistState();
             }
+            this.saveCurrentOutputState();
           },
           error: (e) => {
             this.isRunningQuery = false;
             this.queryError = `Grading failed: ${this.stringifyError(e)}`;
+            this.saveCurrentOutputState();
           }
         });
       },
       error: (e) => {
         this.isRunningQuery = false;
         this.queryError = this.stringifyError(e);
+        this.saveCurrentOutputState();
+        this.persistState();
       }
     });
   }
@@ -584,20 +615,79 @@ export class AppComponent implements AfterViewInit, OnDestroy {
     this.queryRows = [];
     this.queryStatus = null;
     this.queryError = null;
+    this.outputsByMode.clear();
 
     localStorage.removeItem(this.STORAGE_KEY);
+  }
+
+  openProblemReset(): void {
+    this.problemResetTarget = this.selectedModeId;
+    this.isProblemResetDialogOpen = true;
+  }
+
+  cancelProblemReset(): void {
+    this.problemResetTarget = null;
+    this.isProblemResetDialogOpen = false;
+  }
+
+  confirmProblemReset(): void {
+    const target = this.problemResetTarget;
+    this.problemResetTarget = null;
+    this.isProblemResetDialogOpen = false;
+    if (!target) return;
+
+    // Clear per-problem state.
+    this.completedProblemIds.delete(target);
+    const draft = target === 'sandbox' ? this.sandboxStarterSql : '';
+    this.draftsByMode.set(target, draft);
+    this.outputsByMode.delete(target);
+
+    if (this.selectedModeId === target) {
+      this.setEditorText(draft);
+      this.queryColumns = [];
+      this.queryRows = [];
+      this.queryStatus = null;
+      this.queryError = null;
+    }
+
+    this.persistState();
+  }
+
+  private defaultOutputState(): QueryOutputState {
+    return { columns: [], rows: [], status: null, error: null };
+  }
+
+  private saveCurrentOutputState(): void {
+    this.outputsByMode.set(this.selectedModeId, {
+      columns: [...this.queryColumns],
+      rows: [...this.queryRows],
+      status: this.queryStatus,
+      error: this.queryError
+    });
+  }
+
+  private loadOutputStateForMode(id: ModeId): void {
+    const s = this.outputsByMode.get(id) ?? this.defaultOutputState();
+    this.queryColumns = s.columns ?? [];
+    this.queryRows = s.rows ?? [];
+    this.queryStatus = s.status ?? null;
+    this.queryError = s.error ?? null;
   }
 
   private persistState(): void {
     const drafts: Record<string, string> = {};
     for (const [k, v] of this.draftsByMode.entries()) drafts[k] = v;
-    const state: PersistedStateV1 = {
-      v: 1,
+    const outputs: Record<string, QueryOutputState> = {};
+    for (const [k, v] of this.outputsByMode.entries()) outputs[k] = v;
+
+    const state: PersistedStateV2 = {
+      v: 2,
       selectedModeId: this.selectedModeId,
       isDarkMode: this.isDarkMode,
       queryLimit: this.queryLimit,
       completedProblemIds: Array.from(this.completedProblemIds),
-      draftsByMode: drafts
+      draftsByMode: drafts,
+      outputsByMode: outputs
     };
     try {
       localStorage.setItem(this.STORAGE_KEY, JSON.stringify(state));
@@ -610,8 +700,8 @@ export class AppComponent implements AfterViewInit, OnDestroy {
     try {
       const raw = localStorage.getItem(this.STORAGE_KEY);
       if (!raw) return;
-      const parsed = JSON.parse(raw) as Partial<PersistedStateV1>;
-      if (parsed.v !== 1) return;
+      const parsed = JSON.parse(raw) as Partial<PersistedStateV2>;
+      if (parsed.v !== 2) return;
 
       if (parsed.selectedModeId) this.selectedModeId = parsed.selectedModeId as ModeId;
       if (typeof parsed.isDarkMode === 'boolean') this.isDarkMode = parsed.isDarkMode;
@@ -627,11 +717,27 @@ export class AppComponent implements AfterViewInit, OnDestroy {
         }
       }
 
+      if (parsed.outputsByMode && typeof parsed.outputsByMode === 'object') {
+        for (const [k, v] of Object.entries(parsed.outputsByMode)) {
+          const maybe = v as Partial<QueryOutputState> | undefined;
+          if (!maybe) continue;
+          this.outputsByMode.set(k as ModeId, {
+            columns: Array.isArray(maybe.columns) ? (maybe.columns as string[]) : [],
+            rows: Array.isArray(maybe.rows) ? (maybe.rows as unknown[][]) : [],
+            status: typeof maybe.status === 'string' ? maybe.status : null,
+            error: typeof maybe.error === 'string' ? maybe.error : null
+          });
+        }
+      }
+
       // Set initial editor text (editor itself is created later in ngAfterViewInit).
       const initialDraft =
         this.draftsByMode.get(this.selectedModeId) ??
         (this.selectedModeId === 'sandbox' ? this.sandboxStarterSql : '');
       this.sqlText = initialDraft;
+
+      // Set initial output state.
+      this.loadOutputStateForMode(this.selectedModeId);
     } catch {
       // ignore malformed storage
     }
