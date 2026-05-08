@@ -1,0 +1,40 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: practice
+      POSTGRES_PASSWORD: practice
+      POSTGRES_DB: practice
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U practice -d practice"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    volumes:
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+
+  api:
+    build:
+      context: ./api
+    environment:
+      DATABASE_URL: postgresql+psycopg://practice:practice@db:5432/practice
+      QUERY_DEFAULT_LIMIT: "500"
+      CORS_ALLOW_ORIGINS: "http://localhost:4200"
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  ui:
+    build:
+      context: ./ui
+    environment:
+      API_BASE_URL: http://localhost:8000
+    ports:
+      - "4200:4200"
+    depends_on:
+      - api
+

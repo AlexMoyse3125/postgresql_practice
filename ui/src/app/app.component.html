@@ -1,0 +1,90 @@
+<div class="app">
+  <aside class="sidebar">
+    <div class="sidebarHeader">
+      <div class="title">postgresql_practice</div>
+      <button class="btn" (click)="refreshTables()" [disabled]="isLoadingTables">Refresh</button>
+    </div>
+
+    <div class="sidebarBody">
+      <div class="muted" *ngIf="isLoadingTables">Loading tables…</div>
+      <button
+        class="tableItem"
+        *ngFor="let t of tables"
+        (click)="selectTable(t)"
+        [class.active]="t === selectedTable"
+      >
+        {{ t }}
+      </button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <section class="panel">
+      <div class="panelHeader">
+        <div class="panelTitle">SQL</div>
+        <div class="row">
+          <label class="label">
+            Limit
+            <input class="input" type="number" [(ngModel)]="queryLimit" min="1" max="5000" />
+          </label>
+          <button class="btn primary" (click)="runQuery()" [disabled]="isRunningQuery">Run</button>
+        </div>
+      </div>
+
+      <textarea class="sql" [(ngModel)]="sqlText" spellcheck="false"></textarea>
+
+      <div class="status" *ngIf="queryStatus">{{ queryStatus }}</div>
+      <div class="error" *ngIf="queryError">{{ queryError }}</div>
+    </section>
+
+    <section class="panel">
+      <div class="panelHeader">
+        <div class="panelTitle">Query results</div>
+        <div class="muted" *ngIf="isRunningQuery">Running…</div>
+      </div>
+
+      <div class="tableWrap" *ngIf="queryColumns.length; else noQueryResults">
+        <table class="table">
+          <thead>
+            <tr>
+              <th *ngFor="let c of queryColumns">{{ c }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let r of queryRows">
+              <td *ngFor="let _ of queryColumns; let i = index">{{ r[i] }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <ng-template #noQueryResults>
+        <div class="muted">No row results yet. Run a SELECT query.</div>
+      </ng-template>
+    </section>
+
+    <section class="panel">
+      <div class="panelHeader">
+        <div class="panelTitle">Table preview</div>
+        <div class="muted" *ngIf="selectedTable">{{ selectedTable }}</div>
+      </div>
+
+      <div class="muted" *ngIf="isLoadingPreview">Loading preview…</div>
+      <div class="tableWrap" *ngIf="!isLoadingPreview && tablePreviewColumns.length">
+        <table class="table">
+          <thead>
+            <tr>
+              <th *ngFor="let c of tablePreviewColumns">{{ c }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let r of tablePreviewRows">
+              <td *ngFor="let _ of tablePreviewColumns; let i = index">{{ r[i] }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="muted" *ngIf="!isLoadingPreview && selectedTable && !tablePreviewColumns.length">No rows.</div>
+    </section>
+  </main>
+</div>
+
